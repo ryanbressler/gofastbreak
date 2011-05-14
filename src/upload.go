@@ -71,5 +71,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 	}*/
+	//TODO: figure out if this blobInfo object blob[0] is in datastore and queryable
+	//so we can use it to list available files in the ui.
 	http.Redirect(w, r, "/serve/?blobKey="+string(blob[0].BlobKey), http.StatusFound)
 }
