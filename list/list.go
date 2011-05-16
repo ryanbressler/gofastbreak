@@ -18,25 +18,18 @@
      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
-/*from google.appengine.ext.blobstore import BlobInfo 
 
-blobs = BlobInfo.all()
-
-
-print 'Content-Type: text/plain'
-print ''
-for blob in blobs.run():
-	print "%s\n"%(blob.filename)*/
 	
 package list
 
 import (
 	"appengine"
+	"appengine/datastore"
 	"appengine/blobstore"
     "fmt"
     "http"
-    "io"
-    "os"
+    //"io"
+    //"os"
 )
 
 func init() {
@@ -47,16 +40,17 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	
 	
-	biq = NewQuery("BlobInfo")
-    /*if err = datastore.Get(c, key, &e2); err != nil {
+	q := datastore.NewQuery("BlobInfo")
+	blobs := make([]blobstore.BlobInfo,0,100)
+    if _, err := q.GetAll(c, &blobs); err != nil {
     	c.Logf("%v", err)
-        http.Error(w, err.String, http.StatusInternalServerError)
+        http.Error(w, err.String(), http.StatusInternalServerError)
         return
     }
-	
-	*/
+    
 	
 	w.Header().Set("Content-Type", "text/html")
-	
-    fmt.Fprint(w, "hello")
+	for i := 0; i < len(blobs); i++ {
+    	fmt.Fprint(w, blobs[i].Filename)
+    }
 }

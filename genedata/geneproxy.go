@@ -40,16 +40,8 @@ func init() {
     http.HandleFunc("/genedata", geneProxy)
    }
 
-func geneProxy(w ç, r *http.Request) {
-	/*
-	proxyhost = "http://fastbreak.systemsbiology.net/google-dsapi-svc/addama/systemsbiology.org/datasources/tcgajamboree/fastbreak/genes/query?"
-	target = proxyhost +self.request.query
+func geneProxy(w http.ResponseWriter, r *http.Request) {
 
-	re= fetch(target, headers={})
-	
-	self.response.headers['Content-Type'] = 'text/plain'
-	self.response.out.write(re.content)
-	*/
 	c := appengine.NewContext(r)
     client := urlfetch.Client(c)
     re, _, err := client.Get("http://fastbreak.systemsbiology.net/google-dsapi-svc/addama/systemsbiology.org/datasources/tcgajamboree/fastbreak/genes/query?"+strings.Split(r.RawURL,"?",2)[1])
@@ -57,7 +49,15 @@ func geneProxy(w ç, r *http.Request) {
         http.Error(w, err.String(), http.StatusInternalServerError)
         return
     }
-    //TODO : fix these next two lines so they onl include the header once
+    /*TODO : fix these next  lines so they only include the header once
+    in python its:
+    
+    self.response.headers['Content-Type'] = 'text/plain'
+	self.response.out.write(re.content)
+	
+	but i can't figure out how to get just the content from the http.respnse
+	object
+	*/
     re.Write(w)
 	
 	
