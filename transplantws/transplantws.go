@@ -21,7 +21,7 @@
 */
 
 /* 
-This is a scafold for an evantual port of transplantws.py 
+This is a placeholder for an evantual port of transplantws.py 
 
 */
 

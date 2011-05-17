@@ -34,6 +34,7 @@ import (
 func init() {
     http.HandleFunc("/uploadkey", keyHandler)
     http.HandleFunc("/upload", uploadHandler)
+    http.HandleFunc("/uploadredirect", uploadRedirectHandler)
 }
 
 func serveError(c appengine.Context, w http.ResponseWriter, err os.Error) {
@@ -58,6 +59,10 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprint(w, uploadURL)
 }
 
+uploadRedirectHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Fprint(w, "'true'")
+}
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	blobs, _, err := blobstore.ParseUpload(r)
@@ -73,5 +78,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}*/
 	//TODO: figure out if this blobInfo object blob[0] is in datastore and queryable
 	//so we can use it to list available files in the ui.
-	http.Redirect(w, r, "/serve/?blobKey="+string(blob[0].BlobKey), http.StatusFound)
+	http.Redirect(w, r, "/uploadredirect/?blobKey="+string(blob[0].BlobKey), http.StatusFound)
 }
+
