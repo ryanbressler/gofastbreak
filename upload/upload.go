@@ -59,7 +59,7 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprint(w, uploadURL)
 }
 
-uploadRedirectHandler(w http.ResponseWriter, r *http.Request){
+func uploadRedirectHandler(w http.ResponseWriter, r *http.Request){
 	fmt.Fprint(w, "'true'")
 }
 
