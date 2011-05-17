@@ -20,16 +20,27 @@
  
 */
 
-package uploadkey
+package fastbreakapp
+
+
+
 
 import (
 	"appengine"
 	"appengine/blobstore"
+	"appengine/datastore"
     "fmt"
     "http"
     "io"
     "os"
+    "time"
 )
+
+type fileNameToKey struct {
+    BlobKey  appengine.BlobKey
+    Filename string
+    Date    datastore.Time
+}
 
 func init() {
     http.HandleFunc("/uploadkey", keyHandler)
@@ -56,7 +67,7 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 			c.Logf("%v", err)
 	}
 	//json.Marshal won't work with single values so this is wrongish
-    fmt.Fprint(w, uploadURL)
+    fmt.Fprint(w, "\"",uploadURL,"\"")
 }
 
 func uploadRedirectHandler(w http.ResponseWriter, r *http.Request){
@@ -70,14 +81,22 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			serveError(c, w, err)
 			return
 	}
-	blob := blobs["file"]
-	/*if len(file) == 0 {
-			c.Logf("no file uploaded")
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-	}*/
+	blob := blobs["file"][0]
+	
+	 f := fileNameToKey{
+        BlobKey: blob.BlobKey,
+        Filename: blob.Filename,
+        Date:    datastore.SecondsToTime(time.Seconds()),
+    }
+
+    _, err = datastore.Put(c, datastore.NewIncompleteKey("fileNameToKey"), &f)
+    if err != nil {
+        serveError(c, w, err)
+        return
+    }
+    
 	//TODO: figure out if this blobInfo object blob[0] is in datastore and queryable
 	//so we can use it to list available files in the ui.
-	http.Redirect(w, r, "/uploadredirect/?blobKey="+string(blob[0].BlobKey), http.StatusFound)
+	http.Redirect(w, r, "/uploadredirect/blobKey/"+string(blob.BlobKey), http.StatusFound)
 }
 

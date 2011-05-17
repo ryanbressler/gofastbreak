@@ -20,14 +20,15 @@
 */
 
 	
-package list
+package fastbreakapp
 
 import (
 	"appengine"
 	"appengine/datastore"
-	"appengine/blobstore"
+	//"appengine/blobstore"
     "fmt"
     "http"
+    
     //"io"
     //"os"
 )
@@ -40,17 +41,18 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	
 	
-	q := datastore.NewQuery("BlobInfo")
-	blobs := make([]blobstore.BlobInfo,0,100)
+	q := datastore.NewQuery("fileNameToKey")
+	blobs := make([]fileNameToKey,0,100)
     if _, err := q.GetAll(c, &blobs); err != nil {
     	c.Logf("%v", err)
-        http.Error(w, err.String(), http.StatusInternalServerError)
+    	fmt.Fprint(w,err.String())
+        //http.Error(w, err.String(), http.StatusInternalServerError)
         return
     }
     
-	
+	fmt.Fprint(w,"N blobs:", len(blobs),"<br/>")
 	w.Header().Set("Content-Type", "text/html")
 	for i := 0; i < len(blobs); i++ {
-    	fmt.Fprint(w, blobs[i].Filename)
+    	fmt.Fprint(w, blobs[i].Filename,"<br/>")
     }
 }

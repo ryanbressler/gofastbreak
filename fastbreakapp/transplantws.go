@@ -25,7 +25,7 @@ This is a placeholder for an evantual port of transplantws.py
 
 */
 
-package transplantws
+package fastbreakapp
 
 import (
     "fmt"
