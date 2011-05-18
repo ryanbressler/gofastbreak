@@ -28,6 +28,7 @@ This is a placeholder for an evantual port of transplantws.py
 package fastbreakapp
 
 import (
+	"appengine"
     "fmt"
     "http"
 )
@@ -38,5 +39,15 @@ func init() {
 }
 
 func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprint(w, "Hello, world!")
+    c := appengine.NewContext(r)
+    
+    cols := [2]string{"col1","col2"}
+    rows := [2][]string{[]string{"val1","val2"},[]string{"val3","val4"}}
+    jsonout, err := getGoogleDataTableJson(cols[:],rows[:])
+    if  err != nil {
+    	serveError(c, w, err)
+    }
+    
+    w.Header().Set("Content-Type", "text/html")
+    fmt.Fprint(w, string(jsonout))
 }

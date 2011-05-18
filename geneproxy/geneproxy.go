@@ -29,11 +29,11 @@ package geneproxy
 import (
 	"appengine"
 	"appengine/urlfetch"
-    //"fmt"
+    "fmt"
     "http"
     "strings"
     //"io"
-    //"os"
+    "os"
 )
 
 func init() {
@@ -44,9 +44,11 @@ func geneProxy(w http.ResponseWriter, r *http.Request) {
 
 	c := appengine.NewContext(r)
     client := urlfetch.Client(c)
+    c.Logf("%v", r.RawURL)
     re, _, err := client.Get("http://fastbreak.systemsbiology.net/google-dsapi-svc/addama/systemsbiology.org/datasources/tcgajamboree/fastbreak/genes/query?"+strings.Split(r.RawURL,"?",2)[1])
     if err != nil {
         http.Error(w, err.String(), http.StatusInternalServerError)
+        c.Logf("%v", err)
         return
     }
     /*TODO : fix these next  lines so they only include the header once
@@ -58,7 +60,21 @@ func geneProxy(w http.ResponseWriter, r *http.Request) {
 	but i can't figure out how to get just the content from the http.respnse
 	object
 	*/
-    re.Write(w)
+    //re.Write(w)
+    
+    var body []byte
+    _,err = re.Body.Read(body)
+    if err != os.EOF {
+        http.Error(w, err.String(), http.StatusInternalServerError)
+        c.Logf("%v", err)
+        return
+    }
+    
+    
+    w.Header().Set("Content-Type", "text/html")
+    fmt.Fprint(w, string(body))
+    re.Body.Close()
+    
 	
 	
     

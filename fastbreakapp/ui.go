@@ -34,7 +34,11 @@ import (
 
 func init() {
     http.HandleFunc("/", uiHandler)
+    http.HandleFunc("/favicon.ico", faviconHandler)
    }
+func faviconHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Fprint(w, "'false'")
+}
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
 	
@@ -60,7 +64,7 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
     	blobmap[blob.Filename[:28]]=true
     }
     count := len(blobmap)
-    files := make([]string,count)
+    files := make([]string,0,count)
     for fn,_ := range blobmap {
     	files=append(files,fn)
     }
@@ -68,17 +72,19 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
     
      c.Logf("filenames found and sorted")
     for  _,basename := range files{
-    	if (lastfile != "" && basename[:12] != lastfile [:12]){
+    	
+		if (lastfile != "" && basename[:12] != lastfile [:12]){
 			vars["checkboxes"] +="<br/><br/>"+basename[:12]+":<br/>"
 		}
 		vars["checkboxes"] += "<input type='checkbox' id='"+basename+"' name='"+basename+"'/>"+basename+" "
 		lastfile=basename
+		
     }
     vars["files"]="['"+strings.Join(files,"','")+"']"
     
     //fake python style string formating poorly
 	
-	var pageTemplate *template.Template = template.New(nil)
+	
 	pageTemplate.SetDelims("%(",")s")
 	pageTemplate.Parse(pageTemplateConst)
 	
@@ -87,7 +93,7 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 		}
 }
 
-	
+var pageTemplate *template.Template = template.New(nil)	
 
 //note: python version has backticks around label
 const pageTemplateConst=`<?xml version="1.0" ?>

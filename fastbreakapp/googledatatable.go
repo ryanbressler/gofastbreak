@@ -5,29 +5,41 @@ import (
     "json"
 )
 
-type googleDataTable struct {
-    cols	[]map[string]string
-    rows	[]map[string][]map[string]string
+type DataTable struct {
+    Cols	[]dtColHead "cols"
+    Rows	[]dtRow "rows"
 }
 
-//there must be a better way to do this
+type dtVal struct {
+    Val	string "v"
+}
+
+type dtRow struct {
+    ColVals	[]dtVal "c"
+}
+
+type dtColHead struct {
+    Id string "id"
+    Type string "type"
+}
+
+
 func getGoogleDataTableJson(cols []string,rows [][]string) ([]byte, os.Error){
-	out := googleDataTable{cols: make([]map[string]string,len(cols)),
-							rows: make([]map[string][]map[string]string,len(rows))}
 	
-	//all these inner layers should be strucs to make this simpler/faster
-	//but v and type are not allowed as struct field names
+	out := DataTable{Cols: make([]dtColHead,0,len(cols)),
+							Rows: make([]dtRow,0,len(rows))}
+	
 	for _,col := range cols{
-		out.cols=append(out.cols,map[string]string{"id":col,"type":"string"})
+		out.Cols=append(out.Cols,dtColHead{Id:col,Type:"string"})
 		}
 	for _,row := range rows{
-		rowout := make([]map[string]string,len(row))
+		rowout := make([]dtVal,0,len(row))
 		for _,val := range row{
-			rowout=append(rowout,map[string]string{"v":val})
+			rowout=append(rowout,dtVal{Val: val})
 			}
-		out.rows=append(out.rows,map[string][]map[string]string{"c":rowout})
+		out.Rows=append(out.Rows,dtRow{ColVals:rowout})
 	}
-	
+
 	
 	return json.Marshal(out)
 	

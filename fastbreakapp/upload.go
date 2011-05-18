@@ -34,6 +34,7 @@ import (
     "io"
     "os"
     "time"
+    "json"
 )
 
 type fileNameToKey struct {
@@ -45,7 +46,7 @@ type fileNameToKey struct {
 func init() {
     http.HandleFunc("/uploadkey", keyHandler)
     http.HandleFunc("/upload", uploadHandler)
-    http.HandleFunc("/uploadredirect", uploadRedirectHandler)
+    http.HandleFunc("/uploadredirect/", uploadRedirectHandler)
 }
 
 func serveError(c appengine.Context, w http.ResponseWriter, err os.Error) {
@@ -67,7 +68,13 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 			c.Logf("%v", err)
 	}
 	//json.Marshal won't work with single values so this is wrongish
-    fmt.Fprint(w, "\"",uploadURL,"\"")
+    //fmt.Fprint(w, "\"",uploadURL,"\"")
+    outjson, err2 := json.Marshal(uploadURL.Raw)
+    if err2 != nil {
+			serveError(c, w, err)
+			return
+	}
+	fmt.Fprint(w, string(outjson))
 }
 
 func uploadRedirectHandler(w http.ResponseWriter, r *http.Request){
@@ -95,8 +102,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     
-	//TODO: figure out if this blobInfo object blob[0] is in datastore and queryable
-	//so we can use it to list available files in the ui.
-	http.Redirect(w, r, "/uploadredirect/blobKey/"+string(blob.BlobKey), http.StatusFound)
+	http.Redirect(w, r, "/uploadredirect/"+string(blob.BlobKey), http.StatusFound)
 }
 
