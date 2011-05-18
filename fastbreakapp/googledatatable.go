@@ -15,7 +15,8 @@ func getGoogleDataTableJson(cols []string,rows [][]string) ([]byte, os.Error){
 	out := googleDataTable{cols: make([]map[string]string,len(cols)),
 							rows: make([]map[string][]map[string]string,len(rows))}
 	
-	///all these inner layers should be strucs to make this simpler/faster
+	//all these inner layers should be strucs to make this simpler/faster
+	//but v and type are not allowed as struct field names
 	for _,col := range cols{
 		out.cols=append(out.cols,map[string]string{"id":col,"type":"string"})
 		}
