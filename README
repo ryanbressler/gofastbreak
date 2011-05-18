@@ -1,3 +1,16 @@
-This is an expermient to port the fastbreak webservice to go on app
-engine for speed.
+This is an experimental to port the fastbreak webservice to go on app
+engine. The webservice in question does a traversal of the graph of genetic structural variations
+in a tumor sample to produce an adjacency list of the local topology of a given gene which is 
+visualized in javascript.
+
+This repo contains a limited javascript ui for testing webservices.
+
+The python on app engine version:
+http://cloudbreakline.appspot.com/
+https://github.com/ryanbressler/cloudbreakline
+
+
+For more information and the full version:
+http://fastbreak.systemsbiology.net/
+http://code.google.com/p/fastbreak/
 
