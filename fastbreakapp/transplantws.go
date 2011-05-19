@@ -20,10 +20,7 @@
  
 */
 
-/* 
-This is a placeholder for an evantual port of transplantws.py 
-
-*/
+// for testing: http://localhost:8081/transplantdata?filters=[{%22type%22:%22small%22,%22minscore%22:%2294%22},{%22type%22:%22other%22,%22minscore%22:%2294%22}]&chr=chr22&start=27593997&end=28426514&depth=2&radius=400000&file=TCGA-13-0890-10A-01W-0420-08&tqx=reqId%3A53
 
 package fastbreakapp
 
@@ -31,7 +28,7 @@ import (
 	"appengine"
     "fmt"
     "http"
-    //"json"
+    "json"
     "strings"
     "strconv"
 )
@@ -41,7 +38,7 @@ func init() {
     http.HandleFunc("/transplantdata", dataserviceHandler)
 }
 
-func pareInt(c appengine.Context, w http.ResponseWriter, input string) int {
+func parseInt(c appengine.Context, w http.ResponseWriter, input string) int {
 	val,err := strconv.Atoi(input)
 	if err != nil{
 		serveError(c, w, err)
@@ -50,17 +47,162 @@ func pareInt(c appengine.Context, w http.ResponseWriter, input string) int {
 
 }
 
+type filter struct {
+	Type string "type"
+	Minscore string "minscore"
+}
+type contig struct {
+	chr string
+	start int
+	end int
+}
+
+type edge struct {
+	Chr1 string
+	Pos1 int
+	Chr2 string
+	Pos2 int
+	num_Reads int
+	Score string
+	Type string
+	line string
+}
+
+func bisect_left(a []edge, x int, lo int, hi int) int{
+
+	/*if lo < 0:{
+		raise ValueError('lo must be non-negative')
+	}*/
+	if hi < 0{
+		hi = len(a)
+	}
+	for lo < hi{
+		mid := (lo+hi)/2
+		if int(a[mid].Pos1) < x{
+			lo = mid+1
+		}else{
+			hi = mid
+		}
+	}
+	return lo
+	}
+
+func bisect_right(a []edge, x int, lo int, hi int)int{
+
+	/*if lo < 0:
+		raise ValueError('lo must be non-negative')*/
+	if hi < 0{
+		hi = len(a)
+	}
+	for lo < hi{
+		mid := (lo+hi)/2
+		if x < int(a[mid].Pos1){
+			hi = mid
+		}else{
+			lo = mid+1
+		}
+	}
+	return lo
+	}
+
+
+func filterEdges(filename string, chrm string, start int, end int, filters []filter) []edge {
+	out:=make([]edge,0,2)
+	
+	/*
+	indexname = "%s.index.%s.json"%(filename,chrm)
+	log("attempting to load from m cache")
+	index := memcache.get(indexname)
+	if index is None:
+		log("mcache loading failed, loading from blobstore")
+		blob = BlobInfo.gql("where filename = '%s'"%(indexname)).get()
+		if not blob is None:
+			log("mcache loading failed, parseing from json")
+			index = json.load(blob.open())
+			log("adding to memcache")
+			try:
+				if not memcache.add(indexname, index):
+					logging.error("Memcache set failed.")
+			except ValueError:
+				logging.info("Memcache value error.")
+	
+	if not index is None:
+		leftbound = bisect_left(index,start,0,-1)
+		rightbound = bisect_right(index,end,0,-1)                
+		for edge in index[leftbound:rightbound]:
+			#if edge < start:
+			#	continue
+			#if edge["Pos1"] > end:
+			#	break
+				
+			includeme = False
+			if filters != False:
+				for filter in filters:
+					if	edge["Type"]==filter["type"] and int(edge["Score"])>=int(filter["minscore"]) :
+						includeme = True
+						break
+			else:
+				includeme = True
+			if includeme==True:
+				out.append(edge)*/
+	
+	return out
+	}
+
 func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
     c := appengine.NewContext(r)
     
-    /*chrm := string(r.FormValue("chr"))	//the chromosone the start region is located on
+    chrm := string(r.FormValue("chr"))	//the chromosone the start region is located on
 	start := parseInt(c,w,r.FormValue("start")) //the start of the start region
 	end := parseInt(c,w,r.FormValue("end"))	//the end of the start region
 	searchdepth := parseInt(c,w,r.FormValue("depth"))	//the depth of transversals to follow
 	searchradius := parseInt(c,w,r.FormValue("radius"))  //the size of leaves
 	bdoutfile := string(r.FormValue("file"))  //the breakdancer output
-	filters := json.unmarshal(r.FormValue("filters"))
-	key := string(r.FormValue("key"))*/
+	filters := make([]filter,0,2)
+	outcals :=[]string{"edge_id", "source_chr", "target_chr", "source_pos", "target_pos", "num_reads","type","score"}
+	
+	if err:=json.Unmarshal([]byte(r.FormValue("filters")),&filters); err != nil {
+		serveError(c,w,err)
+	}
+//	key := string(r.FormValue("key"))
+	
+	visited := map[string]bool{}
+	contigs := [][]contig{[]contig{contig{chr:chrm,start:start,end:end}}}
+	adjList := [][]string{}
+	for depth:=0; depth<searchdepth; depth++{
+		newcontigs:=make([]contig,0,3)
+		for _,con := range contigs[depth]{
+			for _,edge := range filterEdges(bdoutfile, con.chr,con.start,con.end,filters){
+				if visited[edge.line]{
+					continue
+				}
+				adjList=append(adjList,[]string{edge.line,edge.Chr1,edge.Chr2,fmt.Sprint(edge.Pos1),fmt.Sprint(edge.Pos2),fmt.Sprint(edge.num_Reads),edge.Type,edge.Score})
+				visited[edge.line]=true
+				addcontig := true
+				chr2 := edge.Chr2
+				s := edge.Pos2-searchradius
+				e := edge.Pos2+searchradius
+				for _,c := range newcontigs{			
+					if (chr2 == c.chr && ( (s >= c.start && s <= c.end) || (e >= c.start && e <= c.end) || (s <= c.start && e >= c.end))){
+						addcontig = false
+						if (s < c.start){
+							c.start = s
+							}
+						if (e > c.end){
+							c.end = e
+							}
+						break
+					}
+				}
+		
+				if addcontig==true{
+					newcontigs=append(newcontigs,contig{chr:chr2,start:s,end:e})
+					}
+			
+			}
+		}
+		contigs=append(contigs,newcontigs)
+	}
 	
 	reqId := 0
 	responseHandler :="google.visualization.Query.setResponse"
@@ -68,7 +210,7 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 	for _,param := range strings.Split(tqx,";",-1){
 		pair := strings.Split(param,":",-1)
 		if pair[0] == "reqId"{
-			reqId = pareInt(c,w,pair[1])
+			reqId = parseInt(c,w,pair[1])
 
 		}
 		if pair[0] == "responseHandler"{
@@ -76,9 +218,8 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
     
-    cols := []string{"col1","col2"}
-    rows := [][]string{[]string{"val1","val2"},[]string{"val3","val4"}}
-    jsonout, err := getGoogleDataTableJson(cols,rows)
+
+    jsonout, err := getGoogleDataTableJson(outcals,adjList)
     if  err != nil {
     	serveError(c, w, err)
     }
