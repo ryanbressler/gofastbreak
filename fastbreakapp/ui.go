@@ -34,11 +34,7 @@ import (
 
 func init() {
     http.HandleFunc("/", uiHandler)
-    http.HandleFunc("/favicon.ico", faviconHandler)
    }
-func faviconHandler(w http.ResponseWriter, r *http.Request){
-	fmt.Fprint(w, "'false'")
-}
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
 	
