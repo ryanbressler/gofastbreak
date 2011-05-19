@@ -31,6 +31,9 @@ import (
 	"appengine"
     "fmt"
     "http"
+    //"json"
+    "strings"
+    "strconv"
 )
 
 
@@ -38,16 +41,48 @@ func init() {
     http.HandleFunc("/transplantdata", dataserviceHandler)
 }
 
+func pareInt(c appengine.Context, w http.ResponseWriter, input string) int {
+	val,err := strconv.Atoi(input)
+	if err != nil{
+		serveError(c, w, err)
+	}
+	return val
+
+}
+
 func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
     c := appengine.NewContext(r)
     
-    cols := [2]string{"col1","col2"}
-    rows := [2][]string{[]string{"val1","val2"},[]string{"val3","val4"}}
-    jsonout, err := getGoogleDataTableJson(cols[:],rows[:])
+    /*chrm := string(r.FormValue("chr"))	//the chromosone the start region is located on
+	start := parseInt(c,w,r.FormValue("start")) //the start of the start region
+	end := parseInt(c,w,r.FormValue("end"))	//the end of the start region
+	searchdepth := parseInt(c,w,r.FormValue("depth"))	//the depth of transversals to follow
+	searchradius := parseInt(c,w,r.FormValue("radius"))  //the size of leaves
+	bdoutfile := string(r.FormValue("file"))  //the breakdancer output
+	filters := json.unmarshal(r.FormValue("filters"))
+	key := string(r.FormValue("key"))*/
+	
+	reqId := 0
+	responseHandler :="google.visualization.Query.setResponse"
+	tqx :=string(r.FormValue("tqx")) //the google query
+	for _,param := range strings.Split(tqx,";",-1){
+		pair := strings.Split(param,":",-1)
+		if pair[0] == "reqId"{
+			reqId = pareInt(c,w,pair[1])
+
+		}
+		if pair[0] == "responseHandler"{
+			responseHandler = string(pair[1])
+		}
+	}
+    
+    cols := []string{"col1","col2"}
+    rows := [][]string{[]string{"val1","val2"},[]string{"val3","val4"}}
+    jsonout, err := getGoogleDataTableJson(cols,rows)
     if  err != nil {
     	serveError(c, w, err)
     }
     
     w.Header().Set("Content-Type", "text/html")
-    fmt.Fprint(w, string(jsonout))
+    fmt.Fprint(w, responseHandler+"({status:'ok',table:"+string(jsonout)+",reqId:'"+fmt.Sprint(reqId)+"'})")
 }

@@ -43,9 +43,10 @@ func init() {
 func geneProxy(w http.ResponseWriter, r *http.Request) {
 
 	c := appengine.NewContext(r)
+	target := "http://fastbreak.systemsbiology.net/google-dsapi-svc/addama/systemsbiology.org/datasources/tcgajamboree/fastbreak/genes/query?"
     client := urlfetch.Client(c)
     c.Logf("%v", r.RawURL)
-    re, _, err := client.Get("http://fastbreak.systemsbiology.net/google-dsapi-svc/addama/systemsbiology.org/datasources/tcgajamboree/fastbreak/genes/query?"+strings.Split(r.RawURL,"?",2)[1])
+    re, _, err := client.Get(target+strings.Split(r.RawURL,"?",2)[1])
     if err != nil {
         http.Error(w, err.String(), http.StatusInternalServerError)
         c.Logf("%v", err)
