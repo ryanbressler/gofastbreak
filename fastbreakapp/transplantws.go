@@ -162,27 +162,12 @@ func filterEdges(c appengine.Context,filename string, chrm string, start int, en
 	}
 	/*index := memcache.get(indexname)
 	if index is None:
-		log("mcache loading failed, loading from blobstore")
-		blob = BlobInfo.gql("where filename = '%s'"%(indexname)).get()
-		if not blob is None:
-			log("mcache loading failed, parseing from json")
-			index = json.load(blob.open())
-			log("adding to memcache")
-			try:
-				if not memcache.add(indexname, index):
-					logging.error("Memcache set failed.")
-			except ValueError:
-				logging.info("Memcache value error.")
 	
 	if not index is None:
 		leftbound = bisect_left(index,start,0,-1)
 		rightbound = bisect_right(index,end,0,-1)                
 		for edge in index[leftbound:rightbound]:
-			#if edge < start:
-			#	continue
-			#if edge["Pos1"] > end:
-			#	break
-				
+
 			includeme = False
 			if filters != False:
 				for filter in filters:
