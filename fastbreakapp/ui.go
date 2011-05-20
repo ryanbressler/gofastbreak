@@ -39,11 +39,12 @@ func init() {
 func uiHandler(w http.ResponseWriter, r *http.Request) {
 	
 	c := appengine.NewContext(r)
-	q := datastore.NewQuery("fileNameToKey")
+	
 	vars :=map[string]string{"checkboxes":"","transplantws":"/transplantdata","survivaldatasource":"/sampledata","genedatasource":"/genedata","jsdir":"/js","loadergif":"/images/loader.gif"}
 
 	lastfile := ""
 	
+	q := datastore.NewQuery("fileNameToKey")
 	blobs := make([]fileNameToKey,0,100)
     c.Logf("ui handler entered, vars declared")
     if _, err := q.GetAll(c, &blobs); err != nil {

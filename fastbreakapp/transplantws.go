@@ -26,11 +26,15 @@ package fastbreakapp
 
 import (
 	"appengine"
+	"appengine/memcache"
+	"appengine/blobstore"
+	"appengine/datastore"
     "fmt"
     "http"
     "json"
     "strings"
     "strconv"
+    "os"
 )
 
 
@@ -106,13 +110,57 @@ func bisect_right(a []edge, x int, lo int, hi int)int{
 	}
 
 
-func filterEdges(filename string, chrm string, start int, end int, filters []filter) []edge {
+func filterEdges(c appengine.Context,filename string, chrm string, start int, end int, filters []filter) []edge {
 	out:=make([]edge,0,2)
 	
-	/*
-	indexname = "%s.index.%s.json"%(filename,chrm)
-	log("attempting to load from m cache")
-	index := memcache.get(indexname)
+	
+	indexname := fmt.Sprintf("%s.index.%s.json",filename,chrm)
+	c.Logf("attempting to load %s from m cache",indexname)
+	
+	var indexjson []byte
+	indexitem, err := memcache.Get(c, indexname)
+	if  err == memcache.ErrCacheMiss {
+		c.Logf("item not in the cache")
+		//TODO: load brom blobstore
+		q := datastore.NewQuery("fileNameToKey").Filter("Filename=",indexname)
+		blobs := make([]fileNameToKey,0,100)
+		if _, err := q.GetAll(c, &blobs); err != nil {
+			c.Logf("%v", err)
+			
+		}
+		if len(blobs) == 0 {
+			return out
+		}
+		
+		blobreader := blobstore.NewReader(c,blobs[0].BlobKey)
+		
+		  
+		if _,readerr := blobreader.Read(indexjson); readerr!= nil && readerr != os.EOF {
+			
+			c.Logf("%v", readerr)
+			//return
+		}
+		
+		
+		item := &memcache.Item{Key:   indexname,
+			Value: indexjson,
+			}
+		// Add the item to the memcache, if the key does not already exist
+		if err := memcache.Add(c, item); err == memcache.ErrNotStored {
+			c.Logf("item with key %q already exists", item.Key)
+		} else if err != nil {
+			c.Logf("error adding item: %v", err)
+		}
+
+	} else if err != nil {
+		c.Logf("error getting item: %v", err)
+		indexjson = indexitem.Value
+	}
+	index := make([]edge,0,100)
+	if err:=json.Unmarshal(indexjson,&index); err != nil {
+		c.Logf("error parseingjson: %v", err)
+	}
+	/*index := memcache.get(indexname)
 	if index is None:
 		log("mcache loading failed, loading from blobstore")
 		blob = BlobInfo.gql("where filename = '%s'"%(indexname)).get()
@@ -158,12 +206,13 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 	searchdepth := parseInt(c,w,r.FormValue("depth"))	//the depth of transversals to follow
 	searchradius := parseInt(c,w,r.FormValue("radius"))  //the size of leaves
 	bdoutfile := string(r.FormValue("file"))  //the breakdancer output
-	filters := make([]filter,0,2)
-	outcals :=[]string{"edge_id", "source_chr", "target_chr", "source_pos", "target_pos", "num_reads","type","score"}
 	
+	filters := make([]filter,0,2)
 	if err:=json.Unmarshal([]byte(r.FormValue("filters")),&filters); err != nil {
 		serveError(c,w,err)
 	}
+	
+	outcals :=[]string{"edge_id", "source_chr", "target_chr", "source_pos", "target_pos", "num_reads","type","score"}
 //	key := string(r.FormValue("key"))
 	
 	visited := map[string]bool{}
@@ -172,7 +221,7 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 	for depth:=0; depth<searchdepth; depth++{
 		newcontigs:=make([]contig,0,3)
 		for _,con := range contigs[depth]{
-			for _,edge := range filterEdges(bdoutfile, con.chr,con.start,con.end,filters){
+			for _,edge := range filterEdges(c,bdoutfile, con.chr,con.start,con.end,filters){
 				if visited[edge.line]{
 					continue
 				}
