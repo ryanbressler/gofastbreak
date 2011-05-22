@@ -35,6 +35,7 @@ import (
     "strings"
     "strconv"
     "os"
+    "io/ioutil"
 )
 
 
@@ -69,9 +70,9 @@ type edge struct {
 	Chr2 string
 	Pos2 int
 	NumReads int "num_Reads"
-	Score string
+	Score float32
 	Type string
-	Line string "line"
+	Line int "line"
 }
 
 func bisect_left(a []edge, x int, lo int, hi int) int{
@@ -120,44 +121,53 @@ func filterEdges(c appengine.Context,filename string, chrm string, start int, en
 	c.Logf("attempting to load %s from m cache",indexname)
 	
 	var indexjson []byte
-	indexitem, err := memcache.Get(c, indexname)
-	if  err == memcache.ErrCacheMiss {
-		c.Logf("item not in the cache")
-		//TODO: load brom blobstore
-		q := datastore.NewQuery("fileNameToKey").Filter("Filename=",indexname)
-		blobs := make([]fileNameToKey,0,100)
-		if _, err := q.GetAll(c, &blobs); err != nil {
-			c.Logf("%v", err)
-			
-		}
-		if len(blobs) == 0 {
-			return out
-		}
-		
-		blobreader := blobstore.NewReader(c,blobs[0].BlobKey)
-		
-		  
-		if _,readerr := blobreader.Read(indexjson); readerr!= nil && readerr != os.EOF {
-			
-			c.Logf("%v", readerr)
-			//return
-		}
-		
-		
-		item := &memcache.Item{Key:   indexname,
-			Value: indexjson,
+	switch indexitem, err := memcache.Get(c, indexname);{
+		case  err == memcache.ErrCacheMiss:
+			c.Logf("item not in the cache")
+			//TODO: load brom blobstore
+			q := datastore.NewQuery("fileNameToKey").Filter("Filename=",indexname)
+			blobs := make([]fileNameToKey,0,100)
+			if _, err := q.GetAll(c, &blobs); err != nil {
+				c.Logf("%v", err)
+				
 			}
-		// Add the item to the memcache, if the key does not already exist
-		if err := memcache.Add(c, item); err == memcache.ErrNotStored {
-			c.Logf("item with key %q already exists", item.Key)
-		} else if err != nil {
-			c.Logf("error adding item: %v", err)
-		}
-
-	} else if err != nil {
-		c.Logf("error getting item: %v", err)
-		indexjson = indexitem.Value
+			if len(blobs) == 0 {
+				return out
+			}
+			
+			c.Logf("blobs[0] is %v %v",blobs[0].Filename, blobs[0].BlobKey)
+			blobreader := blobstore.NewReader(c,blobs[0].BlobKey)
+			
+			c.Logf("reading blob into indexjson")  
+			c.Logf("indexjson is %v long before", len(indexjson))
+			var readerr os.Error
+			if indexjson, readerr = ioutil.ReadAll(blobreader); readerr!= nil && readerr != os.EOF {
+				
+				c.Logf("error loading json from blob: %v", readerr)
+				//return
+			} 
+			
+			
+			
+			item := &memcache.Item{Key:   indexname,
+				Value: indexjson,
+				}
+			// Add the item to the memcache, if the key does not already exist
+			if err := memcache.Add(c, item); err == memcache.ErrNotStored {
+				c.Logf("item with key %q already exists", item.Key)
+			} else if err != nil {
+				c.Logf("error adding item: %v", err)
+			}
+	 
+		case err != nil :
+			c.Logf("error getting item: %v", err)
+		
+		case err == nil :
+			c.Logf(" indexjson Loaded from memcache.")
+			indexjson = indexitem.Value
+		
 	}
+	c.Logf("indexjson is %v long after", len(indexjson))
 	index := make([]edge,0,100)
 	if err:=json.Unmarshal(indexjson,&index); err != nil {
 		c.Logf("error parseingjson: %v", err)
@@ -202,7 +212,7 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 	outcals :=[]string{"edge_id", "source_chr", "target_chr", "source_pos", "target_pos", "num_reads","type","score"}
 //	key := string(r.FormValue("key"))
 	
-	visited := map[string]bool{}
+	visited := map[int]bool{}
 	contigs := [][]contig{[]contig{contig{Chr:chrm,Start:start,End:end}}}
 	adjList := [][]string{}
 	for depth:=0; depth<searchdepth; depth++{
@@ -212,7 +222,7 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 				if visited[edge.Line]{
 					continue
 				}
-				adjList=append(adjList,[]string{edge.Line,edge.Chr1,edge.Chr2,fmt.Sprint(edge.Pos1),fmt.Sprint(edge.Pos2),fmt.Sprint(edge.NumReads),edge.Type,edge.Score})
+				adjList=append(adjList,[]string{fmt.Sprint(edge.Line),edge.Chr1,edge.Chr2,fmt.Sprint(edge.Pos1),fmt.Sprint(edge.Pos2),fmt.Sprint(edge.NumReads),edge.Type,fmt.Sprint(edge.Score)})
 				visited[edge.Line]=true
 				addcontig := true
 				chr2 := edge.Chr2
