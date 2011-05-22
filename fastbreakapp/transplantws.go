@@ -16,11 +16,11 @@
  
      You should have received a copy of the GNU Lesser General Public
      License along with this library; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+     Foundation, Incon., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
 
-// for testing: http://localhost:8081/transplantdata?filters=[{%22type%22:%22small%22,%22minscore%22:%2294%22},{%22type%22:%22other%22,%22minscore%22:%2294%22}]&chr=chr22&start=27593997&end=28426514&depth=2&radius=400000&file=TCGA-13-0890-10A-01W-0420-08&tqx=reqId%3A53
+// for testing: http://localhost:8081/transplantdata?filters=[{%22type%22:%22small%22,%22minscore%22:%2294%22},{%22type%22:%22other%22,%22minscore%22:%2294%22}]&chr=chr22&start=27593997&end=28426514&depth=2&radius=400000&file=TCGA-12-0821-01A-01W-0424-08&tqx=reqId%3A53
 
 package fastbreakapp
 
@@ -55,21 +55,23 @@ type filter struct {
 	Type string "type"
 	Minscore string "minscore"
 }
+
 type contig struct {
-	chr string
-	start int
-	end int
+	Chr string
+	Start int
+	End int
 }
 
+//tags for names in json
 type edge struct {
 	Chr1 string
 	Pos1 int
 	Chr2 string
 	Pos2 int
-	num_Reads int
+	NumReads int "num_Reads"
 	Score string
 	Type string
-	line string
+	Line string "line"
 }
 
 func bisect_left(a []edge, x int, lo int, hi int) int{
@@ -201,36 +203,36 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 //	key := string(r.FormValue("key"))
 	
 	visited := map[string]bool{}
-	contigs := [][]contig{[]contig{contig{chr:chrm,start:start,end:end}}}
+	contigs := [][]contig{[]contig{contig{Chr:chrm,Start:start,End:end}}}
 	adjList := [][]string{}
 	for depth:=0; depth<searchdepth; depth++{
 		newcontigs:=make([]contig,0,3)
 		for _,con := range contigs[depth]{
-			for _,edge := range filterEdges(c,bdoutfile, con.chr,con.start,con.end,filters){
-				if visited[edge.line]{
+			for _,edge := range filterEdges(c,bdoutfile, con.Chr,con.Start,con.End,filters){
+				if visited[edge.Line]{
 					continue
 				}
-				adjList=append(adjList,[]string{edge.line,edge.Chr1,edge.Chr2,fmt.Sprint(edge.Pos1),fmt.Sprint(edge.Pos2),fmt.Sprint(edge.num_Reads),edge.Type,edge.Score})
-				visited[edge.line]=true
+				adjList=append(adjList,[]string{edge.Line,edge.Chr1,edge.Chr2,fmt.Sprint(edge.Pos1),fmt.Sprint(edge.Pos2),fmt.Sprint(edge.NumReads),edge.Type,edge.Score})
+				visited[edge.Line]=true
 				addcontig := true
 				chr2 := edge.Chr2
 				s := edge.Pos2-searchradius
 				e := edge.Pos2+searchradius
-				for _,c := range newcontigs{			
-					if (chr2 == c.chr && ( (s >= c.start && s <= c.end) || (e >= c.start && e <= c.end) || (s <= c.start && e >= c.end))){
+				for _,con := range newcontigs{			
+					if (chr2 == con.Chr && ( (s >= con.Start && s <= con.End) || (e >= con.Start && e <= con.End) || (s <= con.Start && e >= con.End))){
 						addcontig = false
-						if (s < c.start){
-							c.start = s
+						if (s < con.Start){
+							con.Start = s
 							}
-						if (e > c.end){
-							c.end = e
+						if (e > con.End){
+							con.End = e
 							}
 						break
 					}
 				}
 		
 				if addcontig==true{
-					newcontigs=append(newcontigs,contig{chr:chr2,start:s,end:e})
+					newcontigs=append(newcontigs,contig{Chr:chr2,Start:s,End:e})
 					}
 			
 			}

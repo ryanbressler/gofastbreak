@@ -29,11 +29,11 @@ package geneproxy
 import (
 	"appengine"
 	"appengine/urlfetch"
-    "fmt"
+   // "fmt"
     "http"
     "strings"
-    //"io"
-    "os"
+    "io"
+    //"os"
 )
 
 func init() {
@@ -63,18 +63,22 @@ func geneProxy(w http.ResponseWriter, r *http.Request) {
 	*/
     //re.Write(w)
     
-    var body []byte
+    /*var body []byte
     _,err = re.Body.Read(body)
     if err != os.EOF {
         http.Error(w, err.String(), http.StatusInternalServerError)
         c.Logf("%v", err)
         return
-    }
+    }*/
     
     
-    w.Header().Set("Content-Type", "text/html")
-    fmt.Fprint(w, string(body))
-    re.Body.Close()
+   	w.Header().Set("Content-Type", "text/html")
+    //w.SetHeader("Content-Type", re.Header["Content-Type"])
+  	w.WriteHeader(re.StatusCode)
+
+  	io.Copy(w, re.Body)
+
+  	re.Body.Close()
     
 	
 	

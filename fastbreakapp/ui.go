@@ -175,7 +175,7 @@ function loadgeneandgrow()
 	
 	//Get gene location
 	var gene_symbol = document.getElementById("gene").value;
-	var querystring = "select gene_symbol, chr, start, end where gene_symbol = ""+gene_symbol+""";
+	var querystring = "select gene_symbol, chr, start, end where gene_symbol = '"+gene_symbol+"'";
 	this.log("loading: " + querystring +" from " + genedatasource);
 	var query = new google.visualization.Query(genedatasource);
 	query.setQuery(querystring);	
@@ -237,7 +237,7 @@ function savegeneloc(response)
 function grow()
 {
 	loadingpatientinfo = true;
-	document.getElementById("visdiv").innerHTML="<center><img src=""+ajloader+""/><br/>Loading Patient Data...<\/center>";
+	document.getElementById("visdiv").innerHTML="<center><img src='"+ajloader+"'/><br/>Loading Patient Data...<\/center>";
 	loadthese=[];
 	drawthese=[];
 
@@ -255,7 +255,7 @@ function grow()
 			
 			var patientid = filename.substring(0,12);
 			var sampletype = filename.substring(13,15)
-			log("patient "" + patientid + "" sampletype "" + sampletype + """)
+			log("patient '" + patientid + "' sampletype '" + sampletype + "'")
 			
 			if(!patients.hasOwnProperty(patientid))
 			{
@@ -274,7 +274,7 @@ function grow()
 			loadthese.push(filename);
 			var patientid = filename.substring(0,12)
 			var sampletype = filename.substring(13,15)
-			log("patient "" + patientid + "" sampletype "" + sampletype + """)
+			//log("patient "" + patientid + "" sampletype "" + sampletype + """)
 			
 			if(!patients.hasOwnProperty(patientid))
 			{
@@ -297,7 +297,7 @@ function grow()
 	var orarray = []
 	for (var patient in patients)
 	{
-		orarray.push("(PATIENT_ID = ""+patient+"")");
+		orarray.push("(PATIENT_ID = '"+patient+"')");
 		
 	}
 	
