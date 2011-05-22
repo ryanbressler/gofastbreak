@@ -113,7 +113,7 @@ func bisect_right(a []edge, x int, lo int, hi int)int{
 	}
 
 
-func filterEdges(c appengine.Context,filename string, chrm string, start int, end int, filters []filter) []edge {
+func filterEdges(c appengine.Context,filename string, chrm string, start int, end int, filters []filter) ([]edge, os.Error) {
 	out:=make([]edge,0,2)
 	
 	
@@ -132,7 +132,7 @@ func filterEdges(c appengine.Context,filename string, chrm string, start int, en
 				
 			}
 			if len(blobs) == 0 {
-				return out
+				return out, nil
 			}
 			
 			c.Logf("blobs[0] is %v %v",blobs[0].Filename, blobs[0].BlobKey)
@@ -144,6 +144,7 @@ func filterEdges(c appengine.Context,filename string, chrm string, start int, en
 			if indexjson, readerr = ioutil.ReadAll(blobreader); readerr!= nil && readerr != os.EOF {
 				
 				c.Logf("error loading json from blob: %v", readerr)
+				return out, readerr
 				//return
 			} 
 			
@@ -171,28 +172,41 @@ func filterEdges(c appengine.Context,filename string, chrm string, start int, en
 	index := make([]edge,0,100)
 	if err:=json.Unmarshal(indexjson,&index); err != nil {
 		c.Logf("error parseingjson: %v", err)
+		return out, err
 	}
-	/*index := memcache.get(indexname)
-	if index is None:
 	
-	if not index is None:
-		leftbound = bisect_left(index,start,0,-1)
-		rightbound = bisect_right(index,end,0,-1)                
-		for edge in index[leftbound:rightbound]:
+	
+	
+	if len(index) > 0 {
+		leftbound := bisect_left(index,start,0,-1)
+		rightbound := bisect_right(index,end,0,-1)                
+		for i := leftbound; i < rightbound; i++ {
+			e := index[i]
+			includeme := false
+			if len(filters) > 0 {
+				for _,filter := range(filters){
+					
+					switch	min, err := strconv.Atof32(filter.Minscore); {
+						case err != nil:
+							c.Logf("error parseing filter: %v", err)
+						case e.Type==filter.Type && e.Score >= min:
+							includeme = true
+							break
+					}
+				}
+			} else {
+				includeme = true
+			}
 
-			includeme = False
-			if filters != False:
-				for filter in filters:
-					if	edge["Type"]==filter["type"] and int(edge["Score"])>=int(filter["minscore"]) :
-						includeme = True
-						break
-			else:
-				includeme = True
-			if includeme==True:
-				out.append(edge)*/
-	
-	return out
+			if includeme {
+				out = append(out,e)
+			}
+		}
 	}
+				
+	
+	return out, nil
+}
 
 func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
     c := appengine.NewContext(r)
@@ -218,7 +232,11 @@ func dataserviceHandler(w http.ResponseWriter, r *http.Request) {
 	for depth:=0; depth<searchdepth; depth++{
 		newcontigs:=make([]contig,0,3)
 		for _,con := range contigs[depth]{
-			for _,edge := range filterEdges(c,bdoutfile, con.Chr,con.Start,con.End,filters){
+			edges,err := filterEdges(c,bdoutfile, con.Chr,con.Start,con.End,filters)
+			if err != nil {
+				serveError(c,w,err)
+			}
+			for _,edge := range edges {
 				if visited[edge.Line]{
 					continue
 				}
