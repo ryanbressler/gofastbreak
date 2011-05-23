@@ -54,24 +54,6 @@ func geneProxy(w http.ResponseWriter, r *http.Request) {
         c.Logf("%v", err)
         return
     }
-    /*TODO : fix these next  lines so they only include the header once
-    in python its:
-    
-    self.response.headers['Content-Type'] = 'text/plain'
-	self.response.out.write(re.content)
-	
-	but i can't figure out how to get just the content from the http.respnse
-	object
-	*/
-    //re.Write(w)
-    
-    /*var body []byte
-    _,err = re.Body.Read(body)
-    if err != os.EOF {
-        http.Error(w, err.String(), http.StatusInternalServerError)
-        c.Logf("%v", err)
-        return
-    }*/
     
     
    	w.Header().Set("Content-Type", "text/html")
