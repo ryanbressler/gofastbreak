@@ -1,6 +1,4 @@
 /*
-
- 
      Copyright (C) 2003-2010 Institute for Systems Biology
                              Seattle, Washington, USA.
  
@@ -19,9 +17,17 @@
      Foundation, Incon., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
+/*
+This webservices, loads json files from blobstore and uses them to do a graph traversal then 
+returns the adjacency list of the local topology of the supplied location in the network of 
+structural variation stored in the json indexes...which are []edge arrays sorted py Pos1.
 
-// for testing: http://localhost:8081/transplantdata?filters=[{%22type%22:%22small%22,%22minscore%22:%2294%22},{%22type%22:%22other%22,%22minscore%22:%2294%22}]&chr=chr22&start=27593997&end=28426514&depth=2&radius=400000&file=TCGA-12-0821-01A-01W-0424-08&tqx=reqId%3A53
+The "nodes" of the network are actually regions of the genome so at each leg of the traversal we 
+search a contigeous region around Pos2 using a modified binary search. We also keep 
+track of which contigeous regions have been visited.
 
+for testing: http://localhost:8081/transplantdata?filters=[{%22type%22:%22small%22,%22minscore%22:%2294%22},{%22type%22:%22other%22,%22minscore%22:%2294%22}]&chr=chr22&start=27593997&end=28426514&depth=2&radius=400000&file=TCGA-12-0821-01A-01W-0424-08&tqx=reqId%3A53
+*/
 package fastbreakapp
 
 import (

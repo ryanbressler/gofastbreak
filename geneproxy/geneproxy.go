@@ -1,5 +1,4 @@
 /*
- 
      Copyright (C) 2003-2010 Institute for Systems Biology
                              Seattle, Washington, USA.
  
@@ -18,9 +17,12 @@
      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
-
 /*
-For testing:
+This is a simple proxy that passes get requests onto a hardcoded target and returns the
+body.
+
+
+Use a url like this for testing:
 http://localhost:8081/genedata?tq=select%20gene_symbol%2C%20chr%2C%20start%2C%20end%20where%20gene_symbol%20%3D%20'EWSR1'&tqx=reqId%3A0
 */
 	

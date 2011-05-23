@@ -1,6 +1,4 @@
 /*
-
- 
      Copyright (C) 2003-2010 Institute for Systems Biology
                              Seattle, Washington, USA.
  
@@ -19,8 +17,17 @@
      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
+/*implments three webservices to support uploadPickles.py (https://github.com/ryanbressler/cloudbreakline):
 
-package fastbreakapp
+/uploadkey
+generates and json encodes a url to post a file to
+
+/upload
+accepts the post, and records filename and blobkey in datastore
+
+/uploadredirect
+does as little as possible to accept the manditory upload redirect after handeling the Post
+*/
 
 
 

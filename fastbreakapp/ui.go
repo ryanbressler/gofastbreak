@@ -17,6 +17,9 @@
      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 
 */
+/* Checkes which files have been loaded into blobstore, builds the array of check boxes for the ui
+and templates a massive uninterpreted sting using a hack to allow it to use pyton style %(name)s
+tokens for templating */
 package fastbreakapp
 
 import (

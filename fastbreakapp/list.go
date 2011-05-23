@@ -1,5 +1,4 @@
 /*
- 
      Copyright (C) 2003-2010 Institute for Systems Biology
                              Seattle, Washington, USA.
  
@@ -18,7 +17,9 @@
      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  
 */
-
+/*
+This is a simple utilit file to list the files that have been uploaded into blobstore.
+*/
 	
 package fastbreakapp
 
