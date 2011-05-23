@@ -1,20 +1,20 @@
 /*
-     Copyright (C) 2003-2010 Institute for Systems Biology
-                             Seattle, Washington, USA.
- 
-     This library is free software; you can redistribute it and/or
-     modify it under the terms of the GNU Lesser General Public
-     License as published by the Free Software Foundation; either
-     version 2.1 of the License, or (at your option) any later version.
- 
-     This library is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     Lesser General Public License for more details.
- 
-     You should have received a copy of the GNU Lesser General Public
-     License along with this library; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+   Copyright (C) 2003-2010 Institute for Systems Biology
+                           Seattle, Washington, USA.
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 
 */
 /* Checkes which files have been loaded into blobstore, builds the array of check boxes for the ui
@@ -26,77 +26,77 @@ import (
 	"appengine"
 	"appengine/datastore"
 	//"appengine/blobstore"
-    "fmt"
-    "http"
-    "sort"
-    "strings"
-    "template"
-    //"io"
-    //"os"
+	"fmt"
+	"http"
+	"sort"
+	"strings"
+	"template"
+	//"io"
+	//"os"
 )
 
 func init() {
-    http.HandleFunc("/", uiHandler)
-   }
-
-func uiHandler(w http.ResponseWriter, r *http.Request) {
-	
-	c := appengine.NewContext(r)
-	
-	vars :=map[string]string{"checkboxes":"","transplantws":"/transplantdata","survivaldatasource":"/sampledata","genedatasource":"/genedata","jsdir":"/js","loadergif":"/images/loader.gif"}
-
-	lastfile := ""
-	
-	q := datastore.NewQuery("fileNameToKey")
-	blobs := make([]fileNameToKey,0,100)
-    c.Logf("ui handler entered, vars declared")
-    if _, err := q.GetAll(c, &blobs); err != nil {
-    	c.Logf("%v", err)
-    	fmt.Fprint(w,err.String())
-        //http.Error(w, err.String(), http.StatusInternalServerError)
-        return
-    }
-    
-    blobmap := map[string]bool{}
-    
-    for _,blob  := range blobs {
-    	//fmt.Fprint(w, blob.Filename) 
-    	blobmap[blob.Filename[:28]]=true
-    }
-    count := len(blobmap)
-    files := make([]string,0,count)
-    for fn,_ := range blobmap {
-    	files=append(files,fn)
-    }
-    sort.SortStrings(files)
-    
-     c.Logf("filenames found and sorted")
-    for  _,basename := range files{
-    	
-		if (lastfile != "" && basename[:12] != lastfile [:12]){
-			vars["checkboxes"] +="<br/><br/>"+basename[:12]+":<br/>"
-		}
-		vars["checkboxes"] += "<input type='checkbox' id='"+basename+"' name='"+basename+"'/>"+basename+" "
-		lastfile=basename
-		
-    }
-    vars["files"]="['"+strings.Join(files,"','")+"']"
-    
-    //fake python style string formating poorly
-	
-	
-	pageTemplate.SetDelims("%(",")s")
-	pageTemplate.Parse(pageTemplateConst)
-	
-	if err := pageTemplate.Execute(w, vars); err != nil {
-			serveError(c, w, err)
-		}
+	http.HandleFunc("/", uiHandler)
 }
 
-var pageTemplate *template.Template = template.New(nil)	
+func uiHandler(w http.ResponseWriter, r *http.Request) {
+
+	c := appengine.NewContext(r)
+
+	vars := map[string]string{"checkboxes": "", "transplantws": "/transplantdata", "survivaldatasource": "/sampledata", "genedatasource": "/genedata", "jsdir": "/js", "loadergif": "/images/loader.gif"}
+
+	lastfile := ""
+
+	q := datastore.NewQuery("fileNameToKey")
+	blobs := make([]fileNameToKey, 0, 100)
+	c.Logf("ui handler entered, vars declared")
+	if _, err := q.GetAll(c, &blobs); err != nil {
+		c.Logf("%v", err)
+		fmt.Fprint(w, err.String())
+		//http.Error(w, err.String(), http.StatusInternalServerError)
+		return
+	}
+
+	blobmap := map[string]bool{}
+
+	for _, blob := range blobs {
+		//fmt.Fprint(w, blob.Filename) 
+		blobmap[blob.Filename[:28]] = true
+	}
+	count := len(blobmap)
+	files := make([]string, 0, count)
+	for fn, _ := range blobmap {
+		files = append(files, fn)
+	}
+	sort.SortStrings(files)
+
+	c.Logf("filenames found and sorted")
+	for _, basename := range files {
+
+		if lastfile != "" && basename[:12] != lastfile[:12] {
+			vars["checkboxes"] += "<br/><br/>" + basename[:12] + ":<br/>"
+		}
+		vars["checkboxes"] += "<input type='checkbox' id='" + basename + "' name='" + basename + "'/>" + basename + " "
+		lastfile = basename
+
+	}
+	vars["files"] = "['" + strings.Join(files, "','") + "']"
+
+	//fake python style string formating poorly
+
+
+	pageTemplate.SetDelims("%(", ")s")
+	pageTemplate.Parse(pageTemplateConst)
+
+	if err := pageTemplate.Execute(w, vars); err != nil {
+		serveError(c, w, err)
+	}
+}
+
+var pageTemplate *template.Template = template.New(nil)
 
 //note: python version has backticks around label
-const pageTemplateConst=`<?xml version="1.0" ?>
+const pageTemplateConst = `<?xml version="1.0" ?>
 
 <html xmlns="http://www.w3.org/1999/xhtml" 
 
