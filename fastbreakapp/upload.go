@@ -57,7 +57,7 @@ func init() {
 func serveError(c appengine.Context, w http.ResponseWriter, err os.Error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "text/plain")
-	io.WriteString(w, "Internal Server Error")
+	io.WriteString(w, fmt.Sprintf("Internal Server Error:%v",err))
 	c.Logf("%v", err)
 }
 
@@ -72,8 +72,7 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.Logf("%v", err)
 	}
-	//json.Marshal won't work with single values so this is wrongish
-	//fmt.Fprint(w, "\"",uploadURL,"\"")
+
 	outjson, err2 := json.Marshal(uploadURL.Raw)
 	if err2 != nil {
 		serveError(c, w, err)
